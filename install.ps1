@@ -91,6 +91,7 @@ if (-not $nssmCmd) {
     Log-Info "nssm not found or not usable. Attempting to download to $InstallDir..."
     $NssmVersion = "2.24-103-gdee49fc"
     $NssmVersionMain = "2.24"
+    $NssmZipSha1 = "0722c8a775deb4a1460d1750088916f4f5951773"
     $NssmZipUrl = if ($GitHubProxy) { "$GitHubProxy/https://github.com/HandSonic/nssm/releases/download/$NssmVersionMain/nssm-$NssmVersion.zip" } else { "https://github.com/HandSonic/nssm/releases/download/$NssmVersionMain/nssm-$NssmVersion.zip" }
     $TempNssmZipPath = Join-Path $env:TEMP "nssm-$NssmVersion.zip"
     $TempExtractDir = Join-Path $env:TEMP "nssm_extract_temp"
@@ -98,6 +99,10 @@ if (-not $nssmCmd) {
     try {
         Log-Info "Downloading nssm from $NssmZipUrl..."
         Invoke-WebRequest -Uri $NssmZipUrl -OutFile $TempNssmZipPath -UseBasicParsing
+        if ((Get-FileHash -Path $TempNssmZipPath -Algorithm SHA1).Hash -ne $NssmZipSha1) {
+            Log-Error "SHA1 hash mismatch for downloaded nssm zip."
+            throw "Downloaded file integrity check failed."
+        }
 
         if (Test-Path $TempExtractDir) { Remove-Item -Recurse -Force $TempExtractDir }
         New-Item -ItemType Directory -Path $TempExtractDir -Force | Out-Null
